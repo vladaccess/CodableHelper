@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 public protocol AnyDateFormatter {
     func date(from string: String) -> Date?
@@ -121,5 +122,84 @@ extension Decodable {
 func decoded<T: Decodable>(_ decoder: JSONDecoder = JSONDecoder(),
                            key: T.Type = T.self) throws -> T {
     return try decoder.decode(key, from: self)
+}
+
+public struct RectCorner: OptionSet {
+    public let rawValue: Int
+    public static let topLeft = RectCorner(rawValue: 1 << 0)
+    public static let topRight = RectCorner(rawValue: 1 << 1)
+    public static let bottomLeft = RectCorner(rawValue: 1 << 2)
+    public static let bottomRight = RectCorner(rawValue: 1 << 3)
+    public static let all: RectCorner = [.topLeft, .topRight, .bottomLeft, .bottomRight]
+    
+    public init(rawValue: Int) {
+        self.rawValue = rawValue
+    }
+    
+    var cornerIdentifier: String {
+        if self == .all {
+            return ""
+        }
+        return "_corner(\(rawValue))"
+    }
+}
+
+extension RectCorner {
+    var uiRectCorner: UIRectCorner {
+        
+        var result: UIRectCorner = []
+        
+        if self.contains(.topLeft) { result.insert(.topLeft) }
+        if self.contains(.topRight) { result.insert(.topRight) }
+        if self.contains(.bottomLeft) { result.insert(.bottomLeft) }
+        if self.contains(.bottomRight) { result.insert(.bottomRight) }
+        
+        return result
+    }
+}
+
+extension UIImage {
+    
+    func draw(cgImage: CGImage?,
+              to size: CGSize,
+              draw: ()->()) -> UIImage {
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        
+        defer { UIGraphicsEndImageContext() }
+        
+        draw()
+        
+        return UIGraphicsGetImageFromCurrentImageContext() ?? self
+    }
+    
+    func image(withRoundRadius radius: CGFloat,
+               fit size: CGSize,
+               roundingCorners corners: RectCorner = .all,
+               backgroundColor: UIColor? = nil) -> UIImage {
+        guard let cgImage = cgImage else {
+            assertionFailure("Round corner image only works for CG-based image.")
+            return UIImage()
+        }
+        
+        let rect = CGRect(origin: .zero, size: size)
+        
+        return draw(cgImage: cgImage, to: size) {
+            guard let context = UIGraphicsGetCurrentContext() else {
+                assertionFailure("Failed to create CG context for image.")
+                return
+            }
+            
+            if let backgroundColor = backgroundColor {
+                let rectPath = UIBezierPath(rect: rect)
+                backgroundColor.setFill()
+                rectPath.fill()
+            }
+            
+            let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners.uiRectCorner, cornerRadii: CGSize(width: radius, height: radius)).cgPath
+            context.addPath(path)
+            context.clip()
+            draw(in: rect)
+        }
+    }
 }
 
