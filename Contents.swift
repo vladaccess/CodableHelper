@@ -201,5 +201,25 @@ extension UIImage {
             draw(in: rect)
         }
     }
+    
+    public func image(withBlendMode blendMode: CGBlendMode,
+                      alpha: CGFloat = 1.0,
+                      backgroundColor: UIColor? = nil) -> UIImage
+    {
+        guard let cgImage = cgImage else {
+            assertionFailure("[Kingfisher] Blend mode image only works for CG-based image.")
+            return self
+        }
+
+        let rect = CGRect(origin: .zero, size: size)
+        return draw(cgImage: cgImage, to: rect.size) {
+            if let backgroundColor = backgroundColor {
+                backgroundColor.setFill()
+                UIRectFill(rect)
+            }
+
+            self.draw(in: rect, blendMode: blendMode, alpha: alpha)
+        }
+    }
 }
 
