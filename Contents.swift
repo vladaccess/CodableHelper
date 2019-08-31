@@ -207,7 +207,7 @@ extension UIImage {
                       backgroundColor: UIColor? = nil) -> UIImage
     {
         guard let cgImage = cgImage else {
-            assertionFailure("[Kingfisher] Blend mode image only works for CG-based image.")
+            assertionFailure("Blend mode image only works for CG-based image.")
             return self
         }
 
