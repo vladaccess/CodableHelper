@@ -221,5 +221,18 @@ extension UIImage {
             self.draw(in: rect, blendMode: blendMode, alpha: alpha)
         }
     }
+    
+    //Resize
+    func resize(to size: CGSize) -> UIImage {
+        guard let cgImage = cgImage else {
+            assertionFailure("Resize only works for CG-based image.")
+            return self
+        }
+        
+        let rect = CGRect(origin: CGPoint(x: 0, y: 0), size: size)
+        return draw(cgImage: cgImage, to: rect.size, draw: {
+            self.draw(in: rect)
+        })
+    }
 }
 
